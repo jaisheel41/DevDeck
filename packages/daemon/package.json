@@ -1,0 +1,49 @@
+{
+  "name": "devdeck",
+  "version": "0.1.0",
+  "description": "Mission control for your local dev environment — daemon, CLI, and bundled dashboard when published.",
+  "type": "module",
+  "bin": {
+    "devdeck": "./bin/devdeck.cjs"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "bin",
+    "public",
+    "package.json"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourname/devdeck.git"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/index.ts",
+    "start": "node --import tsx dist/index.js",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "tsc -p tsconfig.json && node ./scripts/prepublish.mjs"
+  },
+  "dependencies": {
+    "@devdeck/shared": "workspace:*",
+    "tsx": "^4.19.2",
+    "chokidar": "^4.0.3",
+    "express": "^4.21.2",
+    "pidusage": "^3.0.2",
+    "pg": "^8.13.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.11.10",
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.7.2"
+  }
+}
