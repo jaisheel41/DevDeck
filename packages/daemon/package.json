@@ -1,6 +1,6 @@
 {
   "name": "@jaisheel41/devdeck",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "Mission control for your local dev environment — daemon, CLI, and bundled dashboard when published.",
   "type": "module",
   "bin": {
@@ -31,7 +31,7 @@
     "prepublishOnly": "tsc -p tsconfig.json && node ./scripts/prepublish.mjs"
   },
   "dependencies": {
-    "@jaisheel41/devdeck-shared": "workspace:*",
+    "@jaisheel41/devdeck-shared": "0.1.0",
     "tsx": "^4.19.2",
     "chokidar": "^4.0.3",
     "express": "^4.21.2",
