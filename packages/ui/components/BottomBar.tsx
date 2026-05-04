@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { QuickCommand } from "@devdeck/shared";
+import type { QuickCommand } from "@jaisheel1/devdeck-shared";
 
 function CommandPill({ label, onClick }: { label: string; onClick: () => void }) {
   const [hov, setHov] = useState(false);

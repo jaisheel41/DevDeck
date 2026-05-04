@@ -1,6 +1,6 @@
 "use client";
 
-import type { ServiceEnvPayload } from "@devdeck/shared";
+import type { ServiceEnvPayload } from "@jaisheel1/devdeck-shared";
 import { useCallback, useEffect, useState } from "react";
 
 // ── Shared styles ─────────────────────────────────────────────────────────────

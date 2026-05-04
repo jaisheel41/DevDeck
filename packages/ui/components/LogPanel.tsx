@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { LogLevel, LogLine } from "@devdeck/shared";
+import type { LogLevel, LogLine } from "@jaisheel1/devdeck-shared";
 
 // ── Syntax highlighting ───────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
-import type { DevDeckConfig, LogLevel, LogLine, Service, ServiceConfig, WSMessage } from "@devdeck/shared";
+import type { DevDeckConfig, LogLevel, LogLine, Service, ServiceConfig, WSMessage } from "@jaisheel1/devdeck-shared";
 
 const BUFFER_MAX = 500;
 

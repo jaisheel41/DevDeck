@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { QuickCommand, QuickLink } from "@devdeck/shared";
+import type { QuickCommand, QuickLink } from "@jaisheel1/devdeck-shared";
 import { useDaemon, useRollingLogStats } from "../hooks/useDaemon";
 import { BottomBar } from "./BottomBar";
 import { DbPanel } from "./DbPanel";

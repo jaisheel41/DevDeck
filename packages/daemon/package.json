@@ -1,5 +1,5 @@
 {
-  "name": "devdeck",
+  "name": "@jaisheel1/devdeck",
   "version": "0.1.0",
   "description": "Mission control for your local dev environment — daemon, CLI, and bundled dashboard when published.",
   "type": "module",
@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourname/devdeck.git"
+    "url": "https://github.com/jaisheel41/DevDeck.git"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -31,7 +31,7 @@
     "prepublishOnly": "tsc -p tsconfig.json && node ./scripts/prepublish.mjs"
   },
   "dependencies": {
-    "@devdeck/shared": "workspace:*",
+    "@jaisheel1/devdeck-shared": "workspace:*",
     "tsx": "^4.19.2",
     "chokidar": "^4.0.3",
     "express": "^4.21.2",

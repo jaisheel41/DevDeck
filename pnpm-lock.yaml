@@ -17,7 +17,7 @@ importers:
 
   packages/daemon:
     dependencies:
-      '@devdeck/shared':
+      '@jaisheel1/devdeck-shared':
         specifier: workspace:*
         version: link:../shared
       chokidar:
@@ -63,7 +63,7 @@ importers:
 
   packages/ui:
     dependencies:
-      '@devdeck/shared':
+      '@jaisheel1/devdeck-shared':
         specifier: workspace:*
         version: link:../shared
       next:

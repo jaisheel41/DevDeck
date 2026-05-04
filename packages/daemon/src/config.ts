@@ -2,7 +2,7 @@ import { watch } from "chokidar";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { DevDeckConfig, ServiceConfig } from "@devdeck/shared";
+import type { DevDeckConfig, ServiceConfig } from "@jaisheel1/devdeck-shared";
 import { register } from "tsx/esm/api";
 
 /** Walk up from start until devdeck.config.ts or pnpm-workspace.yaml is found (monorepo dev cwd fix). */

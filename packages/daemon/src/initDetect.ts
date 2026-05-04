@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { ServiceConfig } from "@devdeck/shared";
+import type { ServiceConfig } from "@jaisheel1/devdeck-shared";
 
 function slug(s: string) {
   return s.replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-|-$/g, "") || "svc";

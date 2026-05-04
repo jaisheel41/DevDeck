@@ -2,7 +2,7 @@
 const staticExport = process.env.DEVDECK_STATIC_EXPORT === "1";
 
 const nextConfig = {
-  transpilePackages: ["@devdeck/shared"],
+  transpilePackages: ["@jaisheel1/devdeck-shared"],
   env: staticExport ? { NEXT_PUBLIC_DEVDECK_EMBEDDED: "1" } : {},
   ...(staticExport
     ? {

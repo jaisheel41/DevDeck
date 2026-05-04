@@ -1,24 +1,24 @@
+/**
+ * Example config for hacking on the DevDeck monorepo.
+ * For your own app (e.g. Penny), run `devdeck init` in that project — do not ship app-specific paths here.
+ */
 export default {
-  project: "Penny",
+  project: "DevDeck",
   services: [
     {
-      id: "web",
-      name: "Penny — Next.js dev",
-      command: "npm run dev",
+      id: "stack",
+      name: "Monorepo (turbo dev)",
+      command: "pnpm dev",
       port: 3000,
-      cwd: "../penny",
       autoStart: false,
     },
   ],
   quickLinks: [
-    { label: "Penny app", url: "http://localhost:3000" },
-    { label: "Login", url: "http://localhost:3000/login" },
-    { label: "DevDeck UI", url: "http://localhost:4321" },
+    { label: "DevDeck UI (Next)", url: "http://localhost:4321" },
+    { label: "Daemon (bundled UI)", url: "http://127.0.0.1:3132" },
   ],
   quickCommands: [
-    { label: "Lint (penny)", command: 'npm --prefix "../penny" run lint' },
-    { label: "Typecheck (penny)", command: 'npm --prefix "../penny" run typecheck' },
-    { label: "Build (penny)", command: 'npm --prefix "../penny" run build' },
+    { label: "Lint", command: "pnpm lint" },
     { label: "Node version", command: "node -v" },
   ],
 };

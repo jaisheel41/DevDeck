@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { LogLine, MetricsSnapshot, Service, WSMessage } from "@devdeck/shared";
+import type { LogLine, MetricsSnapshot, Service, WSMessage } from "@jaisheel1/devdeck-shared";
 
 const MAX_LOGS = 500;
 const ROLLING_MS = 60_000;

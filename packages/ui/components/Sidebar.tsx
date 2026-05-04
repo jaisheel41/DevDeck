@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { QuickLink, Service, ServiceStatus } from "@devdeck/shared";
+import type { QuickLink, Service, ServiceStatus } from "@jaisheel1/devdeck-shared";
 
 // ── Primitives ────────────────────────────────────────────────────────────────
 
