@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { createServer } from "node:http";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import type { LogLine, WSMessage } from "@jaisheel1/devdeck-shared";
+import type { LogLine, WSMessage } from "@jaisheel41/devdeck-shared";
 import express from "express";
 import { WebSocketServer } from "ws";
 import { loadDevDeckConfigFromDisk, resolveDevDeckProjectRoot, watchDevDeckConfig } from "./config.js";

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, realpathSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
-import type { ServiceConfig } from "@jaisheel1/devdeck-shared";
+import type { ServiceConfig } from "@jaisheel41/devdeck-shared";
 
 function parseDotEnv(content: string): Record<string, string> {
   let text = content;

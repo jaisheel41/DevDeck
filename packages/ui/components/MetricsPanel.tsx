@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Line, LineChart, ResponsiveContainer } from "recharts";
-import type { MetricsSnapshot } from "@jaisheel1/devdeck-shared";
+import type { MetricsSnapshot } from "@jaisheel41/devdeck-shared";
 
 function formatBytes(n: number): string {
   if (n >= 1 << 30) return `${(n / (1 << 30)).toFixed(1)} GB`;

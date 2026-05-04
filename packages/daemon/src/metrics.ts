@@ -1,5 +1,5 @@
 import pidusage from "pidusage";
-import type { MetricsSnapshot, WSMessage } from "@jaisheel1/devdeck-shared";
+import type { MetricsSnapshot, WSMessage } from "@jaisheel41/devdeck-shared";
 import type { BroadcastFn } from "./processManager.js";
 
 export class MetricsCollector {

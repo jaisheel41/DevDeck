@@ -1,5 +1,5 @@
 import pg from "pg";
-import type { DbQueryResult, ServiceConfig } from "@jaisheel1/devdeck-shared";
+import type { DbQueryResult, ServiceConfig } from "@jaisheel41/devdeck-shared";
 import { loadServiceEnv } from "./envManager.js";
 
 function getDatabaseUrl(projectRoot: string, service: ServiceConfig): string | null {

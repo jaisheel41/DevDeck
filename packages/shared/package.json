@@ -1,5 +1,5 @@
 {
-  "name": "@jaisheel1/devdeck-shared",
+  "name": "@jaisheel41/devdeck-shared",
   "version": "0.1.0",
   "private": false,
   "type": "module",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jaisheel41/DevDeck.git"
+    "url": "git+https://github.com/jaisheel41/DevDeck.git"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

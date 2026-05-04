@@ -23,12 +23,12 @@ pnpm -C packages/shared publish --access public
 pnpm -C packages/daemon publish --access public
 ```
 
-The `@jaisheel1/devdeck` package runs `prepublishOnly`, which builds the static UI and copies it into `packages/daemon/public/ui` before packing.
+The `@jaisheel41/devdeck` package runs `prepublishOnly`, which builds the static UI and copies it into `packages/daemon/public/ui` before packing.
 
 After install:
 
 ```bash
-npm install -g @jaisheel1/devdeck
+npm install -g @jaisheel41/devdeck
 devdeck init    # creates devdeck.config.ts (uses package.json scripts when possible)
 devdeck start   # daemon + bundled dashboard on one port when installed from npm
 ```
@@ -52,4 +52,4 @@ Next.js writes under **`packages/ui/.next/`** (including trace data). On Windows
 3. **Stale locks** — Delete `packages/ui/.next` (and root `.turbo` if needed), then run again.
 4. Some users report **Windows Developer Mode** helps with symlink/permission issues when developing Node apps.
 
-The published **`@jaisheel1/devdeck`** package does not bundle Penny or any app-specific env; only your own `devdeck.config.ts` + that app’s directory matter at runtime.
+The published **`@jaisheel41/devdeck`** package does not bundle Penny or any app-specific env; only your own `devdeck.config.ts` + that app’s directory matter at runtime.

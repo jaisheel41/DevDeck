@@ -1,6 +1,6 @@
 "use client";
 
-import type { Service } from "@jaisheel1/devdeck-shared";
+import type { Service } from "@jaisheel41/devdeck-shared";
 
 export function TopBar({
   project,
