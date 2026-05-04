@@ -2,13 +2,27 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-function isDestructiveSql(sql: string): boolean {
+function isDestructive(sql: string): boolean {
   const t = sql.trim();
   if (/\bTRUNCATE\b/i.test(t)) return true;
   if (/\bDROP\s+TABLE\b/i.test(t)) return true;
   if (/^\s*DELETE\s+FROM/i.test(t) && !/\bWHERE\b/i.test(t)) return true;
   return false;
 }
+
+const MONO: React.CSSProperties = {
+  fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
+  fontSize: 11,
+};
+
+const SECTION_LABEL: React.CSSProperties = {
+  fontFamily: "-apple-system, sans-serif",
+  fontSize: 9,
+  fontWeight: 800,
+  letterSpacing: "0.15em",
+  textTransform: "uppercase",
+  color: "var(--text-ghost)",
+};
 
 interface DbPanelProps {
   base: string;
@@ -17,6 +31,7 @@ interface DbPanelProps {
 
 export function DbPanel({ base, serviceId }: DbPanelProps) {
   const [tables, setTables] = useState<string[]>([]);
+  const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [sql, setSql] = useState("SELECT 1");
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [fields, setFields] = useState<{ name: string }[]>([]);
@@ -26,7 +41,6 @@ export function DbPanel({ base, serviceId }: DbPanelProps) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [pendingSql, setPendingSql] = useState<string | null>(null);
-
   const pageSize = 100;
 
   const loadTables = useCallback(async () => {
@@ -34,22 +48,14 @@ export function DbPanel({ base, serviceId }: DbPanelProps) {
     const r = await fetch(`${base}/api/db/tables?serviceId=${encodeURIComponent(serviceId)}`);
     const j = (await r.json()) as { tables?: string[]; error?: string };
     if (j.error) setErr(j.error);
-    else {
-      setErr(null);
-      setTables(j.tables ?? []);
-    }
+    else { setErr(null); setTables(j.tables ?? []); }
   }, [base, serviceId]);
 
-  useEffect(() => {
-    void loadTables();
-  }, [loadTables]);
+  useEffect(() => { void loadTables(); }, [loadTables]);
 
   const run = async (text: string, skipConfirm?: boolean) => {
     if (!serviceId) return;
-    if (!skipConfirm && isDestructiveSql(text)) {
-      setPendingSql(text);
-      return;
-    }
+    if (!skipConfirm && isDestructive(text)) { setPendingSql(text); return; }
     setPendingSql(null);
     setErr(null);
     const r = await fetch(`${base}/api/db/query`, {
@@ -64,109 +70,277 @@ export function DbPanel({ base, serviceId }: DbPanelProps) {
       durationMs?: number;
       error?: string;
     };
-    if (j.error) {
-      setErr(j.error);
-      setRows([]);
-      setFields([]);
-      setMeta("");
-      return;
-    }
+    if (j.error) { setErr(j.error); setRows([]); setFields([]); setMeta(""); return; }
     setRows(j.rows ?? []);
     setFields(j.fields ?? []);
-    setMeta(`${j.rowCount ?? (j.rows?.length ?? 0)} rows in ${j.durationMs ?? 0}ms`);
+    setMeta(`${j.rowCount ?? (j.rows?.length ?? 0)} rows · ${j.durationMs ?? 0}ms`);
     setPage(0);
     setSortKey(null);
   };
 
   const sortedRows = useMemo(() => {
     if (!sortKey) return rows;
-    const copy = [...rows];
-    copy.sort((a, b) => {
-      const va = a[sortKey];
-      const vb = b[sortKey];
-      const sa = va == null ? "" : String(va);
-      const sb = vb == null ? "" : String(vb);
+    return [...rows].sort((a, b) => {
+      const sa = a[sortKey] == null ? "" : String(a[sortKey]);
+      const sb = b[sortKey] == null ? "" : String(b[sortKey]);
       const c = sa.localeCompare(sb);
       return sortDir === "asc" ? c : -c;
     });
-    return copy;
   }, [rows, sortKey, sortDir]);
 
   const pageRows = useMemo(() => {
-    const start = page * pageSize;
-    return sortedRows.slice(start, start + pageSize);
+    const s = page * pageSize;
+    return sortedRows.slice(s, s + pageSize);
   }, [sortedRows, page]);
 
   const toggleSort = (k: string) => {
     if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(k);
-      setSortDir("asc");
-    }
+    else { setSortKey(k); setSortDir("asc"); }
   };
 
   if (!serviceId) {
     return (
-      <p className="p-4 font-mono text-sm text-gray-500">
-        Select a service with a postgres <code className="text-gray-300">DATABASE_URL</code> in its env files (e.g.{" "}
-        <code className="text-gray-300">.env.local</code>) to use the DB client.
+      <p style={{ ...MONO, padding: 16, color: "var(--text-ghost)" }}>
+        Select a service with a postgres{" "}
+        <code style={{ color: "var(--text-mid)" }}>DATABASE_URL</code> to use the DB client.
       </p>
     );
   }
 
   return (
-    <div className="flex min-h-0 flex-1 gap-2 p-2">
+    <div
+      style={{
+        flex: 1,
+        minWidth: 0,
+        minHeight: 0,
+        display: "flex",
+        gap: 0,
+      }}
+    >
+      {/* Destructive confirm modal */}
       {pendingSql && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="max-w-md rounded border border-deck-border bg-deck-panel p-4 font-mono text-sm">
-            <p className="mb-2 text-amber-300">This query looks destructive. Run anyway?</p>
-            <pre className="mb-4 max-h-32 overflow-auto whitespace-pre-wrap text-xs text-gray-400">{pendingSql}</pre>
-            <div className="flex justify-end gap-2">
-              <button type="button" className="rounded bg-gray-700 px-3 py-1" onClick={() => setPendingSql(null)}>
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.7)",
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 420,
+              padding: 20,
+              border: "1px solid var(--border)",
+              borderRadius: 4,
+              background: "var(--surface)",
+              ...MONO,
+            }}
+          >
+            <p style={{ marginBottom: 10, color: "var(--warn)", fontWeight: 700 }}>
+              This query looks destructive. Run anyway?
+            </p>
+            <pre
+              style={{
+                marginBottom: 16,
+                maxHeight: 120,
+                overflowY: "auto",
+                color: "var(--text-mid)",
+                fontSize: 10,
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {pendingSql}
+            </pre>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => setPendingSql(null)}
+                style={{
+                  padding: "4px 12px",
+                  background: "transparent",
+                  border: "1px solid var(--border)",
+                  borderRadius: 3,
+                  ...MONO,
+                  color: "var(--text-mid)",
+                  cursor: "pointer",
+                }}
+              >
                 Cancel
               </button>
-              <button type="button" className="rounded bg-red-700 px-3 py-1" onClick={() => void run(pendingSql!, true)}>
+              <button
+                type="button"
+                onClick={() => void run(pendingSql!, true)}
+                style={{
+                  padding: "4px 12px",
+                  background: "var(--error)",
+                  border: "none",
+                  borderRadius: 3,
+                  ...MONO,
+                  color: "#fff",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                }}
+              >
                 Run
               </button>
             </div>
           </div>
         </div>
       )}
-      <div className="w-48 shrink-0 overflow-auto rounded border border-deck-border bg-deck-panel p-2 font-mono text-xs">
-        <div className="mb-2 text-gray-500">Tables</div>
-        {tables.map((t) => (
-          <button
-            key={t}
-            type="button"
-            className="mb-1 block w-full truncate rounded px-1 py-0.5 text-left text-blue-300 hover:bg-gray-800"
-            onClick={() => {
-              setSql(`SELECT * FROM "${t}" LIMIT 100`);
-              void run(`SELECT * FROM "${t}" LIMIT 100`, true);
-            }}
-          >
-            {t}
-          </button>
-        ))}
+
+      {/* Table list */}
+      <div
+        style={{
+          width: 160,
+          flexShrink: 0,
+          borderRight: "1px solid var(--border)",
+          overflowY: "auto",
+          padding: "10px 0",
+        }}
+      >
+        <div style={{ padding: "0 12px 8px", ...SECTION_LABEL }}>Tables</div>
+        {tables.map((t) => {
+          const active = selectedTable === t;
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => {
+                setSelectedTable(t);
+                const q = `SELECT * FROM "${t}" LIMIT 100`;
+                setSql(q);
+                void run(q, true);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "5px 12px",
+                textAlign: "left",
+                background: active ? "var(--surface)" : "transparent",
+                boxShadow: active ? "inset 3px 0 0 var(--accent)" : "inset 3px 0 0 transparent",
+                border: "none",
+                cursor: "pointer",
+                ...MONO,
+                color: active ? "var(--text-bright)" : "var(--text-dim)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                transition: "all 0.12s ease",
+              }}
+            >
+              {t}
+            </button>
+          );
+        })}
+        {tables.length === 0 && (
+          <p style={{ padding: "0 12px", ...MONO, color: "var(--text-ghost)", fontSize: 10 }}>
+            No tables found
+          </p>
+        )}
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
+
+      {/* Editor + results */}
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: 0,
+        }}
+      >
+        {/* SQL editor */}
         <textarea
           value={sql}
           onChange={(e) => setSql(e.target.value)}
-          className="h-28 w-full resize-none rounded border border-deck-border bg-deck-bg p-2 font-mono text-xs text-gray-100"
+          onKeyDown={(e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+              e.preventDefault();
+              void run(sql);
+            }
+          }}
+          style={{
+            flexShrink: 0,
+            height: 100,
+            resize: "none",
+            padding: "10px 12px",
+            background: "var(--surface)",
+            border: "none",
+            borderBottom: "1px solid var(--border)",
+            ...MONO,
+            color: "var(--text-mid)",
+            outline: "none",
+          }}
         />
-        <div className="flex gap-2">
-          <button type="button" className="rounded bg-blue-700 px-3 py-1 font-mono text-xs" onClick={() => void run(sql)}>
+
+        {/* Run bar */}
+        <div
+          style={{
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "6px 12px",
+            borderBottom: "1px solid var(--border)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => void run(sql)}
+            style={{
+              padding: "3px 14px",
+              background: "var(--accent)",
+              border: "none",
+              borderRadius: 3,
+              ...MONO,
+              fontWeight: 800,
+              color: "var(--bg)",
+              cursor: "pointer",
+            }}
+          >
             Run
           </button>
-          {err && <span className="font-mono text-xs text-red-400">{err}</span>}
+          <span style={{ ...MONO, fontSize: 10, color: "var(--text-ghost)" }}>
+            ⌘↩
+          </span>
+          {err && (
+            <span style={{ ...MONO, fontSize: 10, color: "var(--error)", flex: 1 }}>
+              {err}
+            </span>
+          )}
         </div>
-        <div className="min-h-0 flex-1 overflow-auto rounded border border-deck-border bg-deck-bg">
-          <table className="w-full border-collapse font-mono text-xs">
-            <thead className="sticky top-0 bg-deck-panel">
-              <tr>
+
+        {/* Results grid */}
+        <div style={{ flex: 1, minHeight: 0, overflowX: "auto", overflowY: "auto" }}>
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              ...MONO,
+            }}
+          >
+            <thead>
+              <tr style={{ borderBottom: "2px solid var(--border)", background: "var(--surface)", position: "sticky", top: 0 }}>
                 {fields.map((f) => (
-                  <th key={f.name} className="border-b border-deck-border p-1 text-left text-gray-400">
-                    <button type="button" onClick={() => toggleSort(f.name)} className="hover:text-white">
+                  <th
+                    key={f.name}
+                    style={{ padding: "5px 8px", textAlign: "left", ...SECTION_LABEL, whiteSpace: "nowrap" }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleSort(f.name)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        ...SECTION_LABEL,
+                        color: sortKey === f.name ? "var(--accent)" : "var(--text-ghost)",
+                      }}
+                    >
                       {f.name}
                       {sortKey === f.name ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
                     </button>
@@ -176,10 +350,27 @@ export function DbPanel({ base, serviceId }: DbPanelProps) {
             </thead>
             <tbody>
               {pageRows.map((row, i) => (
-                <tr key={i} className="border-b border-deck-border/40">
+                <tr
+                  key={i}
+                  style={{ borderBottom: "1px solid var(--border)" }}
+                >
                   {fields.map((f) => (
-                    <td key={f.name} className="max-w-xs truncate p-1 text-gray-300">
-                      {row[f.name] == null ? "" : String(row[f.name])}
+                    <td
+                      key={f.name}
+                      style={{
+                        padding: "4px 8px",
+                        maxWidth: 260,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        color: "var(--text-mid)",
+                      }}
+                    >
+                      {row[f.name] == null ? (
+                        <span style={{ color: "var(--text-ghost)" }}>NULL</span>
+                      ) : (
+                        String(row[f.name])
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -187,22 +378,54 @@ export function DbPanel({ base, serviceId }: DbPanelProps) {
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-between font-mono text-xs text-gray-500">
+
+        {/* Pagination */}
+        <div
+          style={{
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "5px 12px",
+            borderTop: "1px solid var(--border)",
+            ...MONO,
+            fontSize: 10,
+            color: "var(--text-ghost)",
+          }}
+        >
           <span>{meta}</span>
-          <div className="flex gap-2">
+          <div style={{ display: "flex", gap: 6 }}>
             <button
               type="button"
               disabled={page === 0}
-              className="rounded bg-gray-800 px-2 py-0.5 disabled:opacity-40"
               onClick={() => setPage((p) => Math.max(0, p - 1))}
+              style={{
+                padding: "2px 8px",
+                background: "transparent",
+                border: "1px solid var(--border)",
+                borderRadius: 3,
+                ...MONO,
+                color: "var(--text-ghost)",
+                cursor: page === 0 ? "default" : "pointer",
+                opacity: page === 0 ? 0.3 : 1,
+              }}
             >
               Prev
             </button>
             <button
               type="button"
               disabled={(page + 1) * pageSize >= sortedRows.length}
-              className="rounded bg-gray-800 px-2 py-0.5 disabled:opacity-40"
               onClick={() => setPage((p) => p + 1)}
+              style={{
+                padding: "2px 8px",
+                background: "transparent",
+                border: "1px solid var(--border)",
+                borderRadius: 3,
+                ...MONO,
+                color: "var(--text-ghost)",
+                cursor: (page + 1) * pageSize >= sortedRows.length ? "default" : "pointer",
+                opacity: (page + 1) * pageSize >= sortedRows.length ? 0.3 : 1,
+              }}
             >
               Next
             </button>

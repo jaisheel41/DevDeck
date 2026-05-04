@@ -3,7 +3,57 @@
 import type { ServiceEnvPayload } from "@devdeck/shared";
 import { useCallback, useEffect, useState } from "react";
 
-type Tab = "effective" | string;
+// ── Shared styles ─────────────────────────────────────────────────────────────
+
+const MONO: React.CSSProperties = {
+  fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
+  fontSize: 11,
+};
+
+const SECTION_LABEL: React.CSSProperties = {
+  fontFamily: "-apple-system, sans-serif",
+  fontSize: 9,
+  fontWeight: 800,
+  letterSpacing: "0.15em",
+  textTransform: "uppercase",
+  color: "var(--text-ghost)",
+};
+
+function GhostBtn({
+  children,
+  onClick,
+  danger,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        padding: "1px 7px",
+        background: "transparent",
+        border: `1px solid ${hov ? (danger ? "var(--error)" : "var(--accent)") : "var(--border)"}`,
+        borderRadius: 3,
+        ...MONO,
+        color: hov ? (danger ? "var(--error)" : "var(--accent)") : "var(--text-ghost)",
+        cursor: "pointer",
+        transition: "all 0.12s ease",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ── EnvVarsPanel ──────────────────────────────────────────────────────────────
+
+type TabName = "effective" | string;
 
 interface EnvVarsPanelProps {
   base: string;
@@ -12,7 +62,7 @@ interface EnvVarsPanelProps {
 
 export function EnvVarsPanel({ base, serviceId }: EnvVarsPanelProps) {
   const [data, setData] = useState<ServiceEnvPayload | null>(null);
-  const [tab, setTab] = useState<Tab>("effective");
+  const [tab, setTab] = useState<TabName>("effective");
   const [visible, setVisible] = useState<Record<string, boolean>>({});
   const [editing, setEditing] = useState<string | null>(null);
   const [editVal, setEditVal] = useState("");
@@ -30,21 +80,11 @@ export function EnvVarsPanel({ base, serviceId }: EnvVarsPanelProps) {
     }
     setData(j);
     const local = j.layers.find((l) => l.name === ".env.local");
-    if (local && Object.keys(local.vars).length > 0) {
-      setTab(".env.local");
-    } else {
-      setTab("effective");
-    }
+    setTab(local && Object.keys(local.vars).length > 0 ? ".env.local" : "effective");
   }, [base, serviceId]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    setTab("effective");
-  }, [serviceId]);
-
+  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { setTab("effective"); }, [serviceId]);
   useEffect(() => {
     if (!data?.layers) return;
     if (tab !== "effective" && !data.layers.some((l) => l.name === tab)) {
@@ -71,49 +111,97 @@ export function EnvVarsPanel({ base, serviceId }: EnvVarsPanelProps) {
 
   if (!serviceId) {
     return (
-      <p className="p-4 font-mono text-sm text-gray-500">
-        Select a service to view and edit env files for its working directory.
+      <p style={{ ...MONO, padding: 16, color: "var(--text-ghost)" }}>
+        Select a service to view and edit its env files.
+      </p>
+    );
+  }
+  if (!data) {
+    return (
+      <p style={{ ...MONO, padding: 16, color: "var(--text-ghost)" }}>
+        Loading…
       </p>
     );
   }
 
-  if (!data) {
-    return <p className="p-4 font-mono text-sm text-gray-500">Loading env… (or service not found)</p>;
-  }
-
   const { merged, provenance, layers, nodeEnv } = data;
-  const activeLayer = typeof tab === "string" && tab !== "effective" ? layers.find((l) => l.name === tab) : undefined;
+  const activeLayer = tab !== "effective" ? layers.find((l) => l.name === tab) : undefined;
   const fileVars = activeLayer?.vars ?? {};
   const filePath = activeLayer?.path ?? "";
 
+  const tabBase: React.CSSProperties = {
+    padding: "4px 12px",
+    border: "1px solid var(--border)",
+    borderRadius: 3,
+    cursor: "pointer",
+    ...MONO,
+    transition: "all 0.1s ease",
+  };
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2 p-4">
+    <div
+      style={{
+        flex: 1,
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        padding: 14,
+        overflowY: "auto",
+      }}
+    >
       {toast && (
-        <div className="rounded border border-amber-700 bg-amber-950/40 px-3 py-2 font-mono text-xs text-amber-200">{toast}</div>
-      )}
-      <div className="font-mono text-xs text-gray-500">
-        Daemon <code className="text-gray-300">NODE_ENV</code>: <span className="text-gray-300">{nodeEnv}</span> — env files merge low→high in fixed order (always includes{" "}
-        <code className="text-gray-300">.env.local</code> when present).
-      </div>
-      <div className="flex flex-wrap gap-1 border-b border-deck-border pb-2">
-        <button
-          type="button"
-          className={`rounded px-2 py-1 font-mono text-xs ${tab === "effective" ? "bg-blue-900/50 text-white" : "text-gray-400 hover:text-white"}`}
-          onClick={() => {
-            setTab("effective");
-            setEditing(null);
+        <div
+          style={{
+            padding: "7px 12px",
+            border: "1px solid var(--warn)",
+            borderRadius: 3,
+            ...MONO,
+            color: "var(--warn)",
           }}
         >
-          Effective (read-only)
+          {toast}
+        </div>
+      )}
+
+      <div style={{ ...MONO, color: "var(--text-ghost)", fontSize: 10 }}>
+        Daemon{" "}
+        <code style={{ color: "var(--text-mid)" }}>NODE_ENV</code>:{" "}
+        <span style={{ color: "var(--text-bright)" }}>{nodeEnv}</span>
+      </div>
+
+      {/* Layer tabs */}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 6,
+          borderBottom: "1px solid var(--border)",
+          paddingBottom: 10,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => { setTab("effective"); setEditing(null); }}
+          style={{
+            ...tabBase,
+            background: tab === "effective" ? "var(--accent)" : "transparent",
+            color: tab === "effective" ? "var(--bg)" : "var(--text-ghost)",
+            borderColor: tab === "effective" ? "var(--accent)" : "var(--border)",
+          }}
+        >
+          Effective
         </button>
         {layers.map((l) => (
           <button
             key={l.name}
             type="button"
-            className={`rounded px-2 py-1 font-mono text-xs ${tab === l.name ? "bg-blue-900/50 text-white" : "text-gray-400 hover:text-white"}`}
-            onClick={() => {
-              setTab(l.name);
-              setEditing(null);
+            onClick={() => { setTab(l.name); setEditing(null); }}
+            style={{
+              ...tabBase,
+              background: tab === l.name ? "var(--accent)" : "transparent",
+              color: tab === l.name ? "var(--bg)" : "var(--text-ghost)",
+              borderColor: tab === l.name ? "var(--accent)" : "var(--border)",
             }}
           >
             {l.name}
@@ -123,38 +211,71 @@ export function EnvVarsPanel({ base, serviceId }: EnvVarsPanelProps) {
 
       {tab === "effective" ? (
         <>
-          <p className="font-mono text-xs text-gray-500">Merged view — last file in the stack wins per key.</p>
-          <div className="overflow-auto rounded border border-deck-border">
-            <table className="w-full border-collapse font-mono text-xs">
-              <thead className="sticky top-0 bg-deck-bg">
-                <tr className="border-b border-deck-border text-left text-gray-400">
-                  <th className="p-2">Key</th>
-                  <th className="p-2">Value</th>
-                  <th className="p-2">Defined in</th>
-                  <th className="p-2 w-20"> </th>
+          <p style={{ ...MONO, fontSize: 10, color: "var(--text-ghost)" }}>
+            Merged view — last file wins per key.
+          </p>
+          <div
+            style={{
+              overflowX: "auto",
+              border: "1px solid var(--border)",
+              borderRadius: 3,
+            }}
+          >
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                ...MONO,
+              }}
+            >
+              <thead>
+                <tr
+                  style={{
+                    borderBottom: "1px solid var(--border)",
+                    background: "var(--surface)",
+                  }}
+                >
+                  {["Key", "Value", "Defined in", ""].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: "5px 8px",
+                        textAlign: "left",
+                        ...SECTION_LABEL,
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {Object.keys(merged).length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="p-4 text-gray-500">
-                      No variables loaded (no env files or all empty). Create a file in another tab.
+                    <td
+                      colSpan={4}
+                      style={{ padding: 12, color: "var(--text-ghost)", ...MONO }}
+                    >
+                      No variables loaded.
                     </td>
                   </tr>
                 ) : (
                   Object.entries(merged).map(([k, v]) => (
-                    <tr key={k} className="border-b border-deck-border/60">
-                      <td className="p-2 text-blue-300">{k}</td>
-                      <td className="p-2 text-gray-300">{visible[k] ? v : "••••••••"}</td>
-                      <td className="p-2 text-amber-200/80">{provenance[k] ?? "—"}</td>
-                      <td className="p-2">
-                        <button
-                          type="button"
-                          className="text-gray-500 hover:text-white"
-                          onClick={() => setVisible((x) => ({ ...x, [k]: !x[k] }))}
-                        >
+                    <tr
+                      key={k}
+                      style={{ borderBottom: "1px solid var(--border)" }}
+                    >
+                      <td style={{ padding: "5px 8px", color: "var(--accent)", fontWeight: 700 }}>{k}</td>
+                      <td style={{ padding: "5px 8px", color: "var(--text-mid)" }}>
+                        {visible[k] ? v : "••••••••"}
+                      </td>
+                      <td style={{ padding: "5px 8px", color: "var(--warn)" }}>
+                        {provenance[k] ?? "—"}
+                      </td>
+                      <td style={{ padding: "5px 8px" }}>
+                        <GhostBtn onClick={() => setVisible((x) => ({ ...x, [k]: !x[k] }))}>
                           {visible[k] ? "hide" : "show"}
-                        </button>
+                        </GhostBtn>
                       </td>
                     </tr>
                   ))
@@ -165,116 +286,152 @@ export function EnvVarsPanel({ base, serviceId }: EnvVarsPanelProps) {
         </>
       ) : (
         <>
-          <div className="break-all font-mono text-xs text-gray-500">{filePath}</div>
-          <div className="overflow-auto rounded border border-deck-border">
-            <table className="w-full border-collapse font-mono text-xs">
-              <thead className="sticky top-0 bg-deck-bg">
-                <tr className="border-b border-deck-border text-left text-gray-400">
-                  <th className="p-2">Key</th>
-                  <th className="p-2">Value</th>
-                  <th className="p-2 w-28"> </th>
+          <div style={{ ...MONO, fontSize: 10, color: "var(--text-ghost)", wordBreak: "break-all" }}>
+            {filePath}
+          </div>
+          <div
+            style={{
+              overflowX: "auto",
+              border: "1px solid var(--border)",
+              borderRadius: 3,
+            }}
+          >
+            <table style={{ width: "100%", borderCollapse: "collapse", ...MONO }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--surface)" }}>
+                  {["Key", "Value", ""].map((h) => (
+                    <th key={h} style={{ padding: "5px 8px", textAlign: "left", ...SECTION_LABEL }}>
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {Object.entries(fileVars).map(([k, v]) => (
-                  <tr key={k} className="border-b border-deck-border/60">
-                    <td className="p-2 text-blue-300">{k}</td>
-                    <td className="p-2">
+                  <tr key={k} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <td style={{ padding: "5px 8px", color: "var(--accent)", fontWeight: 700 }}>{k}</td>
+                    <td style={{ padding: "5px 8px" }}>
                       {editing === k ? (
                         <input
                           value={editVal}
                           onChange={(e) => setEditVal(e.target.value)}
-                          className="w-full rounded border border-deck-border bg-deck-bg px-1 text-gray-200"
+                          style={{
+                            width: "100%",
+                            padding: "2px 6px",
+                            background: "var(--surface)",
+                            border: "1px solid var(--accent)",
+                            borderRadius: 3,
+                            ...MONO,
+                            color: "var(--text-bright)",
+                            outline: "none",
+                          }}
                         />
                       ) : (
-                        <span className="text-gray-300">{visible[`f:${k}`] ? v : "••••••••"}</span>
+                        <span style={{ color: "var(--text-mid)" }}>
+                          {visible[`f:${k}`] ? v : "••••••••"}
+                        </span>
                       )}
                     </td>
-                    <td className="space-x-1 p-2">
-                      <button
-                        type="button"
-                        className="text-gray-500 hover:text-white"
-                        onClick={() => setVisible((x) => ({ ...x, [`f:${k}`]: !x[`f:${k}`] }))}
-                      >
-                        {visible[`f:${k}`] ? "hide" : "show"}
-                      </button>
-                      {editing === k ? (
-                        <button
-                          type="button"
-                          className="text-green-400"
+                    <td style={{ padding: "5px 8px" }}>
+                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                        <GhostBtn onClick={() => setVisible((x) => ({ ...x, [`f:${k}`]: !x[`f:${k}`] }))}>
+                          {visible[`f:${k}`] ? "hide" : "show"}
+                        </GhostBtn>
+                        {editing === k ? (
+                          <GhostBtn
+                            onClick={async () => {
+                              await saveFile(tab, { ...fileVars, [k]: editVal });
+                              setEditing(null);
+                            }}
+                          >
+                            save
+                          </GhostBtn>
+                        ) : (
+                          <GhostBtn onClick={() => { setEditing(k); setEditVal(v); }}>
+                            edit
+                          </GhostBtn>
+                        )}
+                        <GhostBtn
+                          danger
                           onClick={async () => {
-                            const next = { ...fileVars, [k]: editVal };
-                            await saveFile(tab as string, next);
-                            setEditing(null);
+                            const next = { ...fileVars };
+                            delete next[k];
+                            await saveFile(tab, next);
                           }}
                         >
-                          save
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="text-blue-400"
-                          onClick={() => {
-                            setEditing(k);
-                            setEditVal(v);
-                          }}
-                        >
-                          edit
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className="text-red-400"
-                        onClick={async () => {
-                          const next = { ...fileVars };
-                          delete next[k];
-                          await saveFile(tab as string, next);
-                        }}
-                      >
-                        del
-                      </button>
+                          del
+                        </GhostBtn>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="flex flex-wrap gap-2">
+
+          {/* Add variable */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
             <input
               placeholder="NEW_KEY"
               value={newKey}
               onChange={(e) => setNewKey(e.target.value)}
-              className="rounded border border-deck-border bg-deck-bg px-2 py-1 font-mono text-xs"
+              style={{
+                padding: "4px 8px",
+                background: "transparent",
+                border: "1px solid var(--border)",
+                borderRadius: 3,
+                ...MONO,
+                color: "var(--accent)",
+                outline: "none",
+                width: 140,
+              }}
             />
             <input
               placeholder="value"
               value={newVal}
               onChange={(e) => setNewVal(e.target.value)}
-              className="min-w-[12rem] flex-1 rounded border border-deck-border bg-deck-bg px-2 py-1 font-mono text-xs"
+              style={{
+                flex: 1,
+                minWidth: 100,
+                padding: "4px 8px",
+                background: "transparent",
+                border: "1px solid var(--border)",
+                borderRadius: 3,
+                ...MONO,
+                color: "var(--text-mid)",
+                outline: "none",
+              }}
             />
-            <button
-              type="button"
-              className="rounded bg-blue-700 px-3 py-1 font-mono text-xs"
+            <GhostBtn
               onClick={async () => {
                 if (!newKey.trim()) return;
-                const next = { ...fileVars, [newKey.trim()]: newVal };
+                await saveFile(tab, { ...fileVars, [newKey.trim()]: newVal });
                 setNewKey("");
                 setNewVal("");
-                await saveFile(tab as string, next);
               }}
             >
-              Add variable
-            </button>
+              + Add variable
+            </GhostBtn>
           </div>
         </>
       )}
 
       {layers.length === 0 && (
-        <div className="rounded border border-deck-border bg-deck-panel/30 p-3 font-mono text-xs text-gray-400">
-          <p className="mb-2">No <code className="text-gray-200">.env</code> files found in this service directory yet.</p>
-          <button type="button" className="rounded bg-blue-800 px-3 py-1.5 text-gray-100" onClick={() => void createEnvLocal()}>
+        <div
+          style={{
+            padding: 12,
+            border: "1px solid var(--border)",
+            borderRadius: 3,
+            ...MONO,
+            color: "var(--text-ghost)",
+          }}
+        >
+          <p style={{ marginBottom: 10 }}>
+            No <code style={{ color: "var(--text-mid)" }}>.env</code> files found.
+          </p>
+          <GhostBtn onClick={() => void createEnvLocal()}>
             Create .env.local
-          </button>
+          </GhostBtn>
         </div>
       )}
     </div>

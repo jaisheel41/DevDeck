@@ -1,52 +1,71 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import type { LogLevel, LogLine } from "@devdeck/shared";
 
-function highlightLine(text: string): ReactNode[] {
+// ── Syntax highlighting ───────────────────────────────────────────────────────
+
+function highlightBody(text: string): ReactNode[] {
   const parts: ReactNode[] = [];
-  const re =
-    /\b(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\b|\b(\d{3})\b|(\d{4}-\d{2}-\d{2}T[\d:.-]+Z?|\d{2}:\d{2}:\d{2}\.\d{3})/gi;
+  const re = /\b(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\b|\b(\d{3})\b/g;
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
     if (m.index > last) parts.push(text.slice(last, m.index));
-    const full = m[0];
-    if (/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)$/i.test(full)) {
+    const token = m[0];
+    if (/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)$/.test(token)) {
       parts.push(
-        <span key={`${m.index}-m`} className="text-blue-400">
-          {full}
-        </span>,
-      );
-    } else if (/^\d{3}$/.test(full)) {
-      const code = Number(full);
-      const cls =
-        code >= 500 ? "text-red-400" : code >= 400 ? "text-amber-400" : code >= 200 && code < 300 ? "text-green-400" : "text-gray-400";
-      parts.push(
-        <span key={`${m.index}-c`} className={cls}>
-          {full}
+        <span key={m.index} style={{ color: "var(--accent)", fontWeight: 800 }}>
+          {token}
         </span>,
       );
     } else {
+      const code = Number(token);
+      const color =
+        code >= 500
+          ? "var(--error)"
+          : code >= 400
+            ? "var(--warn)"
+            : code >= 200 && code < 300
+              ? "var(--accent)"
+              : "var(--text-mid)";
       parts.push(
-        <span key={`${m.index}-t`} className="text-gray-500">
-          {full}
+        <span key={m.index} style={{ color }}>
+          {token}
         </span>,
       );
     }
-    last = m.index + full.length;
+    last = m.index + token.length;
   }
   if (last < text.length) parts.push(text.slice(last));
   return parts.length ? parts : [text];
 }
 
-function levelColor(level: LogLevel) {
-  if (level === "error") return "text-red-400";
-  if (level === "warn") return "text-amber-300";
-  return "text-gray-300";
+function bodyColor(level: LogLevel): string {
+  if (level === "error") return "var(--error)";
+  if (level === "warn") return "var(--warn)";
+  if (level === "info") return "var(--accent)";
+  return "var(--text-mid)";
 }
 
+// ── Level pills ───────────────────────────────────────────────────────────────
+
 export type LevelFilter = "all" | "errors" | "warnings";
+
+const PILLS: { id: LevelFilter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "errors", label: "Err" },
+  { id: "warnings", label: "Warn" },
+];
+
+// ── LogPanel ──────────────────────────────────────────────────────────────────
 
 interface LogPanelProps {
   logs: LogLine[];
@@ -54,7 +73,7 @@ interface LogPanelProps {
   serviceColors: Record<string, string>;
 }
 
-export function LogPanel({ logs, selectedServiceId, serviceColors }: LogPanelProps) {
+export function LogPanel({ logs, selectedServiceId }: LogPanelProps) {
   const [filter, setFilter] = useState("");
   const [level, setLevel] = useState<LevelFilter>("all");
   const [paused, setPaused] = useState(false);
@@ -89,29 +108,85 @@ export function LogPanel({ logs, selectedServiceId, serviceColors }: LogPanelPro
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col rounded border border-deck-border bg-deck-panel">
-      <div className="flex flex-wrap items-center gap-2 border-b border-deck-border p-2">
+    <div
+      style={{
+        flex: 1,
+        minWidth: 0,
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* Filter + level bar */}
+      <div
+        style={{
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "6px 10px",
+          borderBottom: "1px solid var(--border)",
+          background: "var(--bg)",
+        }}
+      >
         <input
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           placeholder="Filter logs…"
-          className="min-w-[12rem] flex-1 rounded border border-deck-border bg-deck-bg px-2 py-1 font-mono text-xs text-gray-200 outline-none focus:ring-1 focus:ring-blue-500"
+          style={{
+            flex: 1,
+            minWidth: 100,
+            padding: "4px 8px",
+            background: "transparent",
+            border: "1px solid var(--border)",
+            borderRadius: 3,
+            fontFamily: "'SF Mono', 'Fira Code', monospace",
+            fontSize: 10,
+            color: "var(--text-mid)",
+            outline: "none",
+          }}
         />
-        <span className="font-mono text-xs text-gray-500">{visible.length} lines</span>
-        <div className="flex gap-1">
-          {(["all", "errors", "warnings"] as const).map((pill) => (
-            <button
-              key={pill}
-              type="button"
-              onClick={() => setLevel(pill)}
-              className={`rounded px-2 py-0.5 font-mono text-xs ${
-                level === pill ? "bg-blue-600 text-white" : "bg-deck-bg text-gray-400 hover:bg-gray-800"
-              }`}
-            >
-              {pill === "all" ? "All" : pill === "errors" ? "Errors" : "Warnings"}
-            </button>
-          ))}
+
+        <span
+          style={{
+            fontFamily: "'SF Mono', monospace",
+            fontSize: 10,
+            color: "var(--text-ghost)",
+            flexShrink: 0,
+          }}
+        >
+          {visible.length}
+        </span>
+
+        <div style={{ display: "flex", gap: 4 }}>
+          {PILLS.map((pill) => {
+            const active = level === pill.id;
+            return (
+              <button
+                key={pill.id}
+                type="button"
+                onClick={() => setLevel(pill.id)}
+                style={{
+                  padding: "2px 9px",
+                  background: active ? "var(--accent)" : "transparent",
+                  border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                  borderRadius: 3,
+                  fontFamily: "-apple-system, sans-serif",
+                  fontSize: 9,
+                  fontWeight: 800,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: active ? "var(--bg)" : "var(--text-ghost)",
+                  cursor: "pointer",
+                  transition: "all 0.1s ease",
+                }}
+              >
+                {pill.label}
+              </button>
+            );
+          })}
         </div>
+
         {paused && (
           <button
             type="button"
@@ -119,24 +194,76 @@ export function LogPanel({ logs, selectedServiceId, serviceColors }: LogPanelPro
               setPaused(false);
               requestAnimationFrame(scrollToBottom);
             }}
-            className="rounded bg-blue-700 px-2 py-0.5 font-mono text-xs text-white"
+            style={{
+              flexShrink: 0,
+              padding: "2px 9px",
+              background: "transparent",
+              border: "1px solid var(--accent)",
+              borderRadius: 3,
+              fontFamily: "'SF Mono', monospace",
+              fontSize: 10,
+              color: "var(--accent)",
+              cursor: "pointer",
+            }}
           >
             ↓ Resume
           </button>
         )}
       </div>
+
+      {/* Log feed */}
       <div
         ref={containerRef}
         onScroll={onScroll}
-        className="min-h-0 flex-1 overflow-auto p-2 font-mono text-xs leading-relaxed"
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          padding: "6px 10px",
+        }}
       >
-        {visible.map((l) => (
-          <div key={l.id} className={`whitespace-pre-wrap break-all ${levelColor(l.level)}`}>
-            <span className="text-gray-500">[{new Date(l.ts).toLocaleTimeString()}]</span>{" "}
-            <span style={{ color: serviceColors[l.serviceId] ?? "#58a6ff" }}>[{l.serviceName}]</span>{" "}
-            {highlightLine(l.text)}
-          </div>
-        ))}
+        {visible.map((l) => {
+          const ts = new Date(l.ts).toLocaleTimeString("en", {
+            hour12: false,
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          });
+          const color = bodyColor(l.level);
+          return (
+            <div
+              key={l.id}
+              className="animate-log-in"
+              style={{
+                display: "flex",
+                gap: 8,
+                fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
+                fontSize: 10,
+                lineHeight: 1.65,
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-all",
+              }}
+            >
+              <span style={{ color: "var(--text-ghost)", flexShrink: 0 }}>
+                {ts}
+              </span>
+              <span
+                style={{
+                  color: "var(--accent)",
+                  fontWeight: 800,
+                  flexShrink: 0,
+                }}
+              >
+                [{l.serviceName}]
+              </span>
+              <span style={{ color }}>
+                {l.level === "error" || l.level === "warn"
+                  ? l.text
+                  : highlightBody(l.text)}
+              </span>
+            </div>
+          );
+        })}
         <div ref={endRef} />
       </div>
     </div>
