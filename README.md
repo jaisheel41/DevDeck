@@ -195,7 +195,7 @@ pnpm -C packages/shared publish --access public
 pnpm -C packages/daemon publish --access public
 ```
 
-Publish shared first if its version changed. The suggested next CLI version is 0.2.0. It is not published from this repo automatically.
+Publish shared first if its version changed. The CLI version in this repo is 0.2.0. It is not on npm until you publish it.
 
 ## Troubleshooting
 
