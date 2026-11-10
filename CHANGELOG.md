@@ -1,10 +1,12 @@
 # Changelog
 
-Versions here match `@jaisheel41/devdeck` on npm. The suggested next version is 0.2.0. It is not published, and this file does not create a tag or a GitHub release.
+Versions here match `@jaisheel41/devdeck`. 0.2.0 is the version in this repo. It is not on npm until it is published. This file does not create a tag or a GitHub release.
 
 npm 0.1.1 and 0.1.2 were published on 2026-05-04 and do not have their own git commits. There are no git tags yet.
 
 ## Unreleased
+
+## 0.2.0 - 2026-11-10
 
 ### Added
 

@@ -1,6 +1,6 @@
 {
   "name": "@jaisheel41/devdeck",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Local dashboard and CLI for starting dev services, streaming logs, and checking env and Postgres.",
   "license": "MIT",
   "author": "Jaisheel Polimera <jaisheel42@gmail.com> (https://github.com/jaisheel41)",
