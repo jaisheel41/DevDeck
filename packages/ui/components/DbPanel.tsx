@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+function quoteIdent(name: string): string {
+  return `"${name.replace(/"/g, '""')}"`;
+}
+
 function isDestructive(sql: string): boolean {
   const t = sql.trim();
   if (/\bTRUNCATE\b/i.test(t)) return true;
@@ -211,7 +215,7 @@ export function DbPanel({ base, serviceId }: DbPanelProps) {
               type="button"
               onClick={() => {
                 setSelectedTable(t);
-                const q = `SELECT * FROM "${t}" LIMIT 100`;
+                const q = `SELECT * FROM ${quoteIdent(t)} LIMIT 100`;
                 setSql(q);
                 void run(q, true);
               }}

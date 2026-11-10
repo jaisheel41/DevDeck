@@ -37,8 +37,6 @@ export function BottomBar({
   commands: QuickCommand[];
   onRun: (qc: QuickCommand) => void;
 }) {
-  const [addHov, setAddHov] = useState(false);
-
   return (
     <footer
       style={{
@@ -79,7 +77,7 @@ export function BottomBar({
           overflow: "hidden",
         }}
       >
-        {commands.slice(0, 6).map((qc) => (
+        {commands.slice(0, 5).map((qc) => (
           <CommandPill
             key={qc.label + qc.command}
             label={qc.label}
@@ -94,34 +92,10 @@ export function BottomBar({
               color: "var(--text-ghost)",
             }}
           >
-            no quick commands — add them to devdeck.config.ts
+            no quick commands. Add them in devdeck.config.ts
           </span>
         )}
       </div>
-
-      {/* Add Service — solid accent fill, full inversion */}
-      <button
-        type="button"
-        onMouseEnter={() => setAddHov(true)}
-        onMouseLeave={() => setAddHov(false)}
-        style={{
-          flexShrink: 0,
-          padding: "5px 14px",
-          background: addHov ? "#00dd70" : "var(--accent)",
-          border: "none",
-          borderRadius: 3,
-          fontFamily: "-apple-system, sans-serif",
-          fontSize: 11,
-          fontWeight: 800,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: "var(--bg)",
-          cursor: "pointer",
-          transition: "background 0.12s ease",
-        }}
-      >
-        + Add Service
-      </button>
     </footer>
   );
 }

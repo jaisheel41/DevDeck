@@ -1,0 +1,16 @@
+name: Feature
+description: Something the CLI or dashboard should do
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea
+    validations:
+      required: false

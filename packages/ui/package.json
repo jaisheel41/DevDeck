@@ -2,12 +2,29 @@
   "name": "@jaisheel41/devdeck-ui",
   "version": "0.1.0",
   "private": true,
+  "description": "DevDeck dashboard. Private package. The published CLI bundles a static build of it.",
+  "license": "MIT",
+  "author": "Jaisheel Polimera <jaisheel42@gmail.com> (https://github.com/jaisheel41)",
+  "keywords": [
+    "devdeck",
+    "dashboard"
+  ],
+  "homepage": "https://github.com/jaisheel41/DevDeck#readme",
+  "bugs": {
+    "url": "https://github.com/jaisheel41/DevDeck/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaisheel41/DevDeck.git",
+    "directory": "packages/ui"
+  },
   "scripts": {
     "dev": "node dev.mjs",
     "build": "next build",
     "build:static": "node build-static.mjs",
     "start": "next start -p 4321",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@jaisheel41/devdeck-shared": "workspace:*",

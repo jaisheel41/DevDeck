@@ -35,7 +35,7 @@ export function detectServicesFromPackageJson(cwd: string): ServiceConfig[] {
     seen.add(id);
     out.push({
       id,
-      name: `${key}${pkg.name ? ` — ${pkg.name}` : ""}`,
+      name: pkg.name ? `${key} (${pkg.name})` : key,
       command: cmd,
       autoStart: false,
     });

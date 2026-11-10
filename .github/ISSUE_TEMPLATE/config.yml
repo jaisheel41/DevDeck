@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security
+    url: https://github.com/jaisheel41/DevDeck/blob/main/SECURITY.md
+    about: Email a vulnerability report. Do not put details in a public issue.

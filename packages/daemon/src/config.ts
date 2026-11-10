@@ -51,7 +51,7 @@ export function normalizeDevDeckConfig(raw: unknown): DevDeckConfig {
   };
 }
 
-export function getDemoConfig(cwd: string): DevDeckConfig {
+export function getDemoConfig(_cwd: string): DevDeckConfig {
   return normalizeDevDeckConfig({
     project: "DevDeck Demo",
     services: [

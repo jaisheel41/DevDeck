@@ -1,7 +1,8 @@
-import { spawn, type ChildProcess } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import type { DevDeckConfig, LogLevel, LogLine, Service, ServiceConfig, WSMessage } from "@jaisheel41/devdeck-shared";
+import { signalProcessTree, spawnShell } from "./shellProc.js";
 
 const BUFFER_MAX = 500;
 
@@ -131,12 +132,7 @@ export class ProcessManager {
     const cwd = m.config.cwd ? resolve(this.projectRoot, m.config.cwd) : this.projectRoot;
     const env = { ...process.env, ...m.config.env } as NodeJS.ProcessEnv;
     try {
-      const proc = spawn(m.config.command, {
-        cwd,
-        env,
-        shell: true,
-        stdio: ["ignore", "pipe", "pipe"],
-      });
+      const proc = spawnShell(m.config.command, { cwd, env });
       if (!proc.stdout || !proc.stderr) throw new Error("stdio pipes missing");
       m.proc = proc;
       m.pid = proc.pid;
@@ -183,12 +179,8 @@ export class ProcessManager {
     }
   }
 
-  private killTree(proc: ChildProcess) {
-    try {
-      proc.kill("SIGTERM");
-    } catch {
-      /* ignore */
-    }
+  private killTree(proc: ChildProcess, signal: NodeJS.Signals = "SIGTERM") {
+    signalProcessTree(proc, signal);
   }
 
   async stop(id: string): Promise<void> {
@@ -205,11 +197,7 @@ export class ProcessManager {
     this.killTree(proc);
     await new Promise<void>((resolve) => {
       const t = setTimeout(() => {
-        try {
-          proc.kill("SIGKILL");
-        } catch {
-          /* ignore */
-        }
+        this.killTree(proc, "SIGKILL");
         resolve();
       }, 3000);
       proc.once("exit", () => {

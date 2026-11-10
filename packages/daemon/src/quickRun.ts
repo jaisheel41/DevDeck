@@ -1,4 +1,5 @@
-import { spawn, type ChildProcess } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
+import { signalProcessTree, spawnShell } from "./shellProc.js";
 
 const MAX_CONCURRENT = 3;
 
@@ -21,12 +22,15 @@ export class QuickRunManager {
       return { ok: false, error: "Too many quick commands running (max 3)." };
     }
     this.running++;
-    const proc = spawn(command, {
-      cwd,
-      shell: true,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
+    let proc: ChildProcess;
+    try {
+      proc = spawnShell(command, { cwd });
+    } catch (err) {
+      this.running = Math.max(0, this.running - 1);
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
     if (!proc.stdout || !proc.stderr) {
+      signalProcessTree(proc, "SIGTERM");
       this.running = Math.max(0, this.running - 1);
       return { ok: false, error: "stdio pipes missing" };
     }
@@ -57,13 +61,7 @@ export class QuickRunManager {
   }
 
   shutdown() {
-    for (const p of this.children) {
-      try {
-        p.kill("SIGTERM");
-      } catch {
-        /* ignore */
-      }
-    }
+    for (const p of this.children) signalProcessTree(p, "SIGTERM");
     this.children.clear();
     this.running = 0;
   }
