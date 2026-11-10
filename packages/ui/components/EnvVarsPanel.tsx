@@ -212,7 +212,7 @@ export function EnvVarsPanel({ base, serviceId }: EnvVarsPanelProps) {
       {tab === "effective" ? (
         <>
           <p style={{ ...MONO, fontSize: 10, color: "var(--text-ghost)" }}>
-            Merged view — last file wins per key.
+            Merged view. Last file wins per key.
           </p>
           <div
             style={{

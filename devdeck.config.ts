@@ -1,6 +1,6 @@
 /**
- * Example config for hacking on the DevDeck monorepo.
- * For your own app (e.g. Penny), run `devdeck init` in that project — do not ship app-specific paths here.
+ * Example config for working on the DevDeck monorepo.
+ * For your own app, run `devdeck init` in that project.
  */
 export default {
   project: "DevDeck",

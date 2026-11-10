@@ -203,7 +203,12 @@ export async function startDaemon(): Promise<number> {
     chosenPort = BASE_PORT + i;
     const ok = await tryListen(chosenPort);
     if (ok) break;
-    await new Promise<void>((res) => server.close(() => res()));
+    // A failed listen never opens the server. close() then reports ERR_SERVER_NOT_RUNNING.
+    if (server.listening) {
+      await new Promise<void>((res) => {
+        server.close(() => res());
+      });
+    }
     if (i === 39) throw new Error("No free port for daemon in range");
   }
 
@@ -224,7 +229,7 @@ export async function startDaemon(): Promise<number> {
             `<body style="font-family:system-ui,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;padding:2rem;line-height:1.5">` +
             `<h1 style="font-size:1.25rem">DevDeck daemon</h1>` +
             `<p>This address (<strong>http://127.0.0.1:${chosenPort}</strong>) is the <strong>API + WebSocket</strong>, not the dashboard.</p>` +
-            `<p>Open the UI (Next.js) in your browser — usually:<br/><a href="${uiHint}" style="color:#58a6ff">${uiHint}</a></p>` +
+            `<p>Open the UI (Next.js) in your browser, usually:<br/><a href="${uiHint}" style="color:#58a6ff">${uiHint}</a></p>` +
             `<p style="opacity:.75;font-size:0.875rem">If <code>pnpm dev</code> printed another port (line starting with <code>[DevDeck]</code>), use that URL instead.</p>` +
             `<p style="opacity:.75;font-size:0.875rem">You do <strong>not</strong> need a separate app project: services are defined in <code>devdeck.config.ts</code> in this repo.</p>` +
             `</body></html>`,

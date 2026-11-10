@@ -31,6 +31,24 @@ function readProjectName(cwd: string): string {
   }
 }
 
+function packageVersion(): string {
+  try {
+    const pkgPath = join(dirname(fileURLToPath(import.meta.url)), "..", "package.json");
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { version?: string };
+    return typeof pkg.version === "string" && pkg.version ? pkg.version : "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
+function printUsage(write: (line: string) => void) {
+  write("Usage: devdeck [start|serve|init|version]");
+  write("  start, serve   Start the daemon and open the dashboard");
+  write("  init           Write devdeck.config.ts if it does not exist");
+  write("  version, -v    Print the version");
+  write("  help, -h       Print this help");
+}
+
 function buildInitFile(cwd: string): string {
   const project = readProjectName(cwd);
   const detected = detectServicesFromPackageJson(cwd);
@@ -51,6 +69,16 @@ function buildInitFile(cwd: string): string {
 
 export async function runCli(argv: string[]) {
   const cmd = argv[2] ?? "start";
+
+  if (cmd === "version" || cmd === "--version" || cmd === "-v") {
+    console.log(packageVersion());
+    return;
+  }
+
+  if (cmd === "help" || cmd === "--help" || cmd === "-h") {
+    printUsage((line) => console.log(line));
+    return;
+  }
 
   if (cmd === "init") {
     const cwd = process.cwd();
@@ -83,6 +111,6 @@ export async function runCli(argv: string[]) {
   }
 
   console.error(`Unknown command: ${cmd}`);
-  console.error("Usage: devdeck [start|init]");
+  printUsage((line) => console.error(line));
   process.exit(1);
 }

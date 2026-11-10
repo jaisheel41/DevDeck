@@ -73,7 +73,7 @@ interface LogPanelProps {
   serviceColors: Record<string, string>;
 }
 
-export function LogPanel({ logs, selectedServiceId }: LogPanelProps) {
+export function LogPanel({ logs, selectedServiceId, serviceColors }: LogPanelProps) {
   const [filter, setFilter] = useState("");
   const [level, setLevel] = useState<LevelFilter>("all");
   const [paused, setPaused] = useState(false);
@@ -249,7 +249,7 @@ export function LogPanel({ logs, selectedServiceId }: LogPanelProps) {
               </span>
               <span
                 style={{
-                  color: "var(--accent)",
+                  color: serviceColors[l.serviceId] ?? "var(--accent)",
                   fontWeight: 800,
                   flexShrink: 0,
                 }}

@@ -1,15 +1,38 @@
 {
   "name": "devdeck",
+  "version": "0.1.3",
   "private": true,
+  "description": "Local dashboard for dev services. Monorepo for the CLI, shared types, and Next.js UI.",
+  "license": "MIT",
+  "author": "Jaisheel Polimera <jaisheel42@gmail.com> (https://github.com/jaisheel41)",
+  "keywords": [
+    "devdeck",
+    "cli",
+    "dashboard",
+    "developer-tools",
+    "process-manager"
+  ],
+  "homepage": "https://github.com/jaisheel41/DevDeck#readme",
+  "bugs": {
+    "url": "https://github.com/jaisheel41/DevDeck/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaisheel41/DevDeck.git"
+  },
   "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test"
   },
   "devDependencies": {
     "turbo": "^2.3.3",
     "typescript": "^5.7.2"
-  },
-  "version": ""
+  }
 }
